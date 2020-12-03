@@ -1,24 +1,22 @@
 {% include 'main/vNavbar.html' %}
 <div class="ui container">
-	<div style="background-color: rgba(0, 81, 255, 0.2); border-radius: 1.5em; padding:0.5em; margin-top:5em;">
-	
-		{% if user.email|length > 0 %}
+
+		<!-- {% if user.email|length > 0 %}
 		<h1>Hello {{user.login}} !</h1>
 			
 		{% else %}
-		<!-- Normally not connected user will not access this page -->
+		 Temporary, not connected user will not access this page 
 		<h1>Hello not connected user !</h1>
 		
-		{% endif %}
+		{% endif %} -->
 		
-		<p>1</p>
-		<p>1</p>
-		<p>1</p>
-		<p>1</p>
-		<p>1</p>
-		<p>1</p>
-		<p>1</p>
+		<h2 class="ui center aligned header">
+			<div class="content">Hello user{{user.login}} !</div>
+		</h2>
 		
+	<div class="ui segment">	
+  		<p>hello</p>
 	</div>
 </div>
+
 {{ script_foot | raw }}
