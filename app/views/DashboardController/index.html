@@ -1,22 +1,44 @@
-{% include 'main/vNavbar.html' %}
 <div class="ui container">
 
-		<!-- {% if user.email|length > 0 %}
-		<h1>Hello {{user.login}} !</h1>
+{% if user.email|length > 0 %}
+	<div class="ui segment">
+		<div class="ui segments">
+			<div class="ui segment">
+				<h2 class="ui icon center aligned header">
+					<img src="https://react.semantic-ui.com/images/icons/school.png" class="ui image"/>
+					<div class="content">Welcome to your dashboard, {{user.firstname}}</div>
+				</h2>
+			</div>
 			
-		{% else %}
-		 Temporary, not connected user will not access this page 
-		<h1>Hello not connected user !</h1>
-		
-		{% endif %} -->
-		
-		<h2 class="ui center aligned header">
-			<div class="content">Hello user{{user.login}} !</div>
-		</h2>
-		
-	<div class="ui segment">	
-  		<p>hello</p>
+			<div class="ui segment">
+				<p>Top</p>
+			</div>
+			<div class="ui horizontal segments" style="height:30em;">
+				<div class="ui segment">
+					<p>Your questions :</p>
+					<button>go to question</button>
+				</div>
+				<div class="ui segment">
+					<div class="ui segment">
+					<p>Your QCM :</p>
+					<button>go to qcm</button>
+				</div>
+				<div class="ui segment">
+					<div class="ui segment">
+					<p>Your exams :</p>
+					<button>go to exam</button>
+				</div>
+			</div>
+			<div class="ui segment">
+				<p>Bottom</p>
+			</div>
+		</div>
 	</div>
+	
+	{% else %}
+	
+	<h2> Sorry</h2>
+	<p>Not connected user can't access this page, login or register !</p>
+	
+	{% endif %}
 </div>
-
-{{ script_foot | raw }}

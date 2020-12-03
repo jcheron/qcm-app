@@ -1,10 +1,10 @@
 <div class="ui primary menu" style="border-radius:0px;">
 	<a class="item" href="{{path('_default')}}"><i class="home icon"></i><b>Home</b></a>
 	<a class="item" href="question/index">Question</a>
-	<a class="item" href="/dashboard">Dashboard</a>
 	{% if user.email|length > 0 %}
+	<a class="item" href="/dashboard">Dashboard</a>
 	<div class="right menu">
-		<a class="item" href="{{path('terminate')}}">Logout</a>
+		<a class="item" href="{{path('terminate')}}"><i class="sign out alt icon"></i>Logout</a>
 		<a class ="item">{{user.email}}</a>
 	</div>
 	{% else %}
