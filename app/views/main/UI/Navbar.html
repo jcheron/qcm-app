@@ -3,14 +3,15 @@
 	<a class="item" href="question/index">Question</a>
 	<a class="item" href="/dashboard">Dashboard</a>
 	{% if user.email|length > 0 %}
-		<div class="right menu">
+	<div class="right menu">
 		<a class="item" href="{{path('terminate')}}">Logout</a>
 		<a class ="item">{{user.email}}</a>
 	</div>
 	{% else %}
-		<div class="right menu">
-		<a class="item" href="{{path('login')}}"><i class="user icon"></i>Log in</a>
-		<a class="item" href="{{path('register')}}">Register</a>
+	<div class="right menu">
+		<a class="item" id="login"><i class="user icon"></i>Log in</a>
+		<a class="item" id="register">Register</a>
 	</div>
 	{% endif %}
 </div>
+
