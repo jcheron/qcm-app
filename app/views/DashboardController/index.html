@@ -1,7 +1,7 @@
 <div class="ui container">
 
 {% if user.email|length > 0 %}
-	<div class="ui segment">
+	<div class="ui segment" style="margin-top:3em;">
 		<div class="ui segments">
 			<div class="ui segment">
 				<h2 class="ui icon center aligned header">
@@ -10,23 +10,34 @@
 				</h2>
 			</div>
 			
+			<!-- TODO: faire marcher le CSS pour utiliser flexbox et bien afficher quelques questions de l'utilisateur depuis la BDD -->
+			
 			<div class="ui segment">
 				<p>Top</p>
 			</div>
 			<div class="ui horizontal segments" style="height:30em;">
 				<div class="ui segment">
-					<p>Your questions :</p>
-					<button>go to question</button>
+					<div class="horizontalSegmentFlex">
+						<p>Your questions :</p>
+						<button class="ui blue basic button">
+							<i class="icon user"></i>
+							Question
+						</button>
+					</div>
 				</div>
 				<div class="ui segment">
-					<div class="ui segment">
 					<p>Your QCM :</p>
-					<button>go to qcm</button>
+					<button class="ui red basic button">
+						<i class="icon user"></i>
+						QCM
+					</button>
 				</div>
 				<div class="ui segment">
-					<div class="ui segment">
 					<p>Your exams :</p>
-					<button>go to exam</button>
+					<button class="ui green basic button">
+						<i class="icon user"></i>
+						Exam
+					</button>
 				</div>
 			</div>
 			<div class="ui segment">
