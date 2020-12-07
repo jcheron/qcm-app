@@ -4,7 +4,7 @@
 	<a class="item" href="{{path('question')}}">{{t('question',[],'main')}}</a>
 	<a class="item" href="{{path('group')}}">{{t('group',[],'main')}}</a>
 	<a class="item" href="{{path('qcm')}}">{{t('qcm',[],'main')}}</a>
-	<a class="item" href="question/index">Question</a>
+	<a class="item" href="dashboard">Dashboard</a>
 	{% if user.email|length > 0 %}
 		<div class="right menu">
 		<a class="item" href="{{path('terminate')}}">{{t('logout',[],'main')}}</a>

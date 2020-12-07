@@ -41,13 +41,16 @@ body{
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	max-height: 20em;
+	overflow-y: scroll;
 	
 }
 
 .flexSegmtBody > div {
 	background-color: rgba(0, 0, 0, 0.05);
-	margin-bottom: 0.3em;
-	padding: 0.3em;
+	margin-bottom: 0.4em;
+	margin-right: 0.5em;
+	padding: 0.4em;
 	border-radius: 0.4em;
 }
 
