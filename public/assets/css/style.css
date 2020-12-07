@@ -26,6 +26,27 @@ body{
   	padding: 15px 0;
   	text-align:center;
 }
+
+.flexSegmtHead {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 1em;
+}
+
+.flexSegmtBody {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	
+}
+
+.flexSegmtBody > div {
+	background-color: rgba(0, 0, 0, 0.05);
+	margin-bottom: 0.3em;
+	padding: 0.3em;
+	border-radius: 0.4em;
+}
+
 <<<<<<< Updated upstream
 ._element:hover {
 =======
