@@ -6,6 +6,8 @@ use Ubiquity\orm\DAO;
 use models\Answer;
 use models\Question;
 use Ubiquity\utils\http\USession;
+use models\User;
+use models\Questiontag;
 
 class QuestionDAOLoader {
 
@@ -13,19 +15,26 @@ class QuestionDAOLoader {
 		return DAO::getById ( Question::class, $id );
 	}
 
-	public function add(Question $item,Answer $answer): void {
+	public function add(Question $item,array $tags): void {
+	    $creator = new User();
+	    $creator->setId(USession::get('activeUser')['id']);
+	    $item->setUser($creator);
 		DAO::insert ( $item );
-		$answer->setQuestion($item);
-		DAO::insert($answer);
+		foreach($tags as $tag) {
+		    $questiontag = new Questiontag();
+		    $questiontag->setIdQuestion($item->getId());
+		    $questiontag->setIdTag($tag);
+		    DAO::insert($questiontag);
+		}
 	}
 
 	public function all(): array {
-		return DAO::getAll ( Question::class );
+		return DAO::getAll ( Question::class,false );
 	}
 	
 	public function my(): array{
 	    $userid = USession::get('activeUser')['id'];
-	    return DAO::getAll( Question::class, 'idUser='.$userid);
+	    return DAO::getAll( Question::class, 'idUser='.$userid,false);
 	}
 
 	public function clear(): void {

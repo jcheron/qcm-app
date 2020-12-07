@@ -22,7 +22,7 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
     }
     
     /**
-     * @post("/login")
+     * @post("/login",'name'=>'loginPost')
      */
     public function loginPost(){
         if(gettype($this->_connect())!=="string"){
@@ -35,6 +35,7 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
             $process="error";
         }
         header('location:/');
+        exit();
     }
     
     /**
@@ -43,10 +44,11 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
     public function terminate(){
         USession::terminate ();
         header('location:/');
+        exit();
     }
     
     /**
-     * @post("/register")
+     * @post("/register",'name'=>'registerPost')
      */
     public function registerPost(){
         if(URequest::isPost()){
@@ -74,7 +76,7 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
             $user=DAO::getOne(User::class,"email = ?",true,[URequest::post('email')]);
             if($user!==null){
                 if(URequest::post('password')==$user->getPassword()){
-                    return ["id"=>$user->getId(),"email"=>$user->getEmail(),"firstname"=>$user->getFirstname(),"lastname"=>$user->getLastname()];
+                    return ["id"=>$user->getId(),"email"=>$user->getEmail(),"firstname"=>$user->getFirstname(),"lastname"=>$user->getLastname(),'language'=>$user->getLanguage()];
                 }
                 else{
                     return "Wrong password !";

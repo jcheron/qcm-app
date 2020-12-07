@@ -16,6 +16,10 @@ body{
 	color: white!important;
 } 
 
+#tagManager{
+	width:100%;
+}
+
 .footer {
 	
   	background-color: #F7F7F7;
@@ -47,10 +51,12 @@ body{
 	border-radius: 0.4em;
 }
 
-<<<<<<< Updated upstream
 ._element:hover {
-=======
+
+textarea,input,.selection{
+	margin:10px 0 !important;
+}
+
 #dtItems tbody tr:hover {
->>>>>>> Stashed changes
 	background:whitesmoke;
 }

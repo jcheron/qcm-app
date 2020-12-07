@@ -18,19 +18,25 @@ class Question{
 	private $caption;
 
 	/**
+	 * @column("name"=>"ckcontent","nullable"=>true,"dbType"=>"text")
+	**/
+	private $ckcontent;
+
+	/**
 	 * @column("name"=>"points","nullable"=>true,"dbType"=>"int(11)")
 	**/
 	private $points;
 
 	/**
-	 * @column("name"=>"tags","nullable"=>true,"dbType"=>"text")
-	**/
-	private $tags;
-
-	/**
 	 * @oneToMany("mappedBy"=>"question","className"=>"models\\Answer")
 	**/
 	private $answers;
+
+	/**
+	 * @manyToOne
+	 * @joinColumn("className"=>"models\\Typeq","name"=>"idTypeq","nullable"=>false)
+	**/
+	private $typeq;
 
 	/**
 	 * @manyToOne
@@ -60,6 +66,14 @@ class Question{
 		$this->caption=$caption;
 	}
 
+	 public function getCkcontent(){
+		return $this->ckcontent;
+	}
+
+	 public function setCkcontent($ckcontent){
+		$this->ckcontent=$ckcontent;
+	}
+
 	 public function getPoints(){
 		return $this->points;
 	}
@@ -68,20 +82,20 @@ class Question{
 		$this->points=$points;
 	}
 
-	 public function getTags(){
-		return $this->tags;
-	}
-
-	 public function setTags($tags){
-		$this->tags=$tags;
-	}
-
 	 public function getAnswers(){
 		return $this->answers;
 	}
 
 	 public function setAnswers($answers){
 		$this->answers=$answers;
+	}
+
+	 public function getTypeq(){
+		return $this->typeq;
+	}
+
+	 public function setTypeq($typeq){
+		$this->typeq=$typeq;
 	}
 
 	 public function getUser(){
