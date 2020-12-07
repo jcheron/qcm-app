@@ -9,8 +9,7 @@ use models\User;
  * Auth Controller BaseAuthController
  */
 class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{   
-    protected $headerView = "@activeTheme/main/vHeader.html";
-    protected $footerView = "@activeTheme/main/vFooter.html";
+
     
     public function getSession()
     {
@@ -21,31 +20,9 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
     {
         $this->session = $session;
     }
-
-    public function initialize() {
-        if (! URequest::isAjax ()) {
-            $user = USession::get('activeUser');
-            $this->loadView ( $this->headerView ,[
-                'user' => $user
-            ] );	
-        }
-    }
-    
-    public function finalize() {
-        if (! URequest::isAjax ()) {
-            $this->loadView ( $this->footerView);
-        }
-    }
     
     /**
-     * @get("/login","name"=>"login")
-     */
-    public function index(){
-        $this->loadDefaultView();
-    }
-    
-    /**
-     * @post("/login")
+     * @post("/login",'name'=>'loginPost')
      */
     public function loginPost(){
         if(gettype($this->_connect())!=="string"){
@@ -57,14 +34,8 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
             $info=$this->_connect();
             $process="error";
         }
-        $this->loadView("BaseAuthController/index.html",["info"=>$info,"process"=>$process,"session"=>USession::getAll()]);
-    }
-    
-    /**
-     * @get("/register","name"=>"register")
-     */
-    public function register(){
-        $this->loadDefaultView();
+        header('location:/');
+        exit();
     }
     
     /**
@@ -72,17 +43,19 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
      */
     public function terminate(){
         USession::terminate ();
+        header('location:/');
+        exit();
     }
     
     /**
-     * @post("/register")
+     * @post("/register",'name'=>'registerPost')
      */
     public function registerPost(){
         if(URequest::isPost()){
             if(DAO::getOne(User::class,"email = ?",true,[URequest::post("email")])===null){
                 $instance=new User();
                 URequest::setValuesToObject($instance);
-                $instance->setPassword(password_hash(URequest::post('password'), PASSWORD_ARGON2I));
+                $instance->setPassword(URequest::post('password'));
                 DAO::insert($instance);
                 header('location:/');
                 exit();
@@ -102,8 +75,8 @@ class BaseAuthController extends \Ubiquity\controllers\auth\AuthController{
         if(URequest::isPost()){
             $user=DAO::getOne(User::class,"email = ?",true,[URequest::post('email')]);
             if($user!==null){
-                if(password_verify(URequest::post('password'),$user->getPassword())){
-                    return ["id"=>$user->getId(),"email"=>$user->getEmail(),"firstname"=>$user->getFirstname(),"lastname"=>$user->getLastname()];
+                if(URequest::post('password')==$user->getPassword()){
+                    return ["id"=>$user->getId(),"email"=>$user->getEmail(),"firstname"=>$user->getFirstname(),"lastname"=>$user->getLastname(),'language'=>$user->getLanguage()];
                 }
                 else{
                     return "Wrong password !";

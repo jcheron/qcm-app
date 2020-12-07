@@ -16,6 +16,10 @@ body{
 	color: white!important;
 } 
 
+#tagManager{
+	width:100%;
+}
+
 .footer {
 	
   	background-color: #F7F7F7;
@@ -25,4 +29,12 @@ body{
   	width: 100%;
   	padding: 15px 0;
   	text-align:center;
+}
+
+textarea,input,.selection{
+	margin:10px 0 !important;
+}
+
+#dtItems tbody tr:hover {
+	background:whitesmoke;
 }

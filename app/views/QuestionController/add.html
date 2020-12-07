@@ -1,12 +1,36 @@
-{% include 'main/vNavbar.html' %}
-<div class="ui container">
-<form class="ui form" id="frmItem" name="frmItem">
-<input type="text" name="caption" placeholder="Item caption">
-        <textarea id="editor" name="editor" cols="80" rows="10">
-      
-        </textarea>
-<button id="btValidate" class="ui button">Valider</button>
-</form>
-</div>
-{{script_foot | raw}}
+<a id="cancel" href="{{path('question')}}" data-target="#response" class="ui red button">{{t('cancel',[],'main')}}</a>
+<a class="ui green button" id="create">test</a>
 
+
+
+
+
+
+
+<div class="ui menu">
+  <a class="browse item">
+    Assign tag
+    <i class="dropdown icon"></i>
+  </a>
+</div>
+<div class="ui fluid popup bottom left transition hidden">
+		<form id="checkedTagForm"  name="checkedTagForm" >
+			<div id="tagManager">
+			</div>
+		</form>
+		<form id="tagForm"  name="tagForm" >
+			<div class="ui right labeled left icon input">
+			  	<i class="tags icon"></i>
+			  	<input id="nametag" style="width:175px;" name="nametag" type="text" placeholder="Enter tags">
+				<a id="addTag" class="ui tag label" style="height:38px;margin-top:10px;">Add Tag</a>
+			</div>
+		</form>
+</div>
+<div class="ui segment" style="">
+{{ q['questionForm'] | raw }}
+</div>
+<div id="response-form"></div>
+<script>
+includeCkEditor('{{identifier}}','{{lang}}');
+</script>
+{{ script_foot | raw }}

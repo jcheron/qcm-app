@@ -1,5 +1,8 @@
 <?php
 namespace models;
+
+use Ubiquity\orm\DAO;
+use Ubiquity\utils\http\USession;
 /**
  * @table('user')
 */
@@ -8,63 +11,69 @@ class User{
 	 * @id
 	 * @column("name"=>"id","nullable"=>false,"dbType"=>"int(11)")
 	 * @validator("id","constraints"=>array("autoinc"=>true))
-	**/
+	*/
 	private $id;
 
 	/**
 	 * @column("name"=>"password","nullable"=>true,"dbType"=>"varchar(42)")
 	 * @validator("length","constraints"=>array("max"=>42))
 	 * @transformer("name"=>"password")
-	**/
+	*/
 	private $password;
 
 	/**
 	 * @column("name"=>"firstname","nullable"=>true,"dbType"=>"varchar(42)")
 	 * @validator("length","constraints"=>array("max"=>42))
-	**/
+	*/
 	private $firstname;
 
 	/**
 	 * @column("name"=>"lastname","nullable"=>true,"dbType"=>"varchar(42)")
 	 * @validator("length","constraints"=>array("max"=>42))
-	**/
+	*/
 	private $lastname;
 
 	/**
 	 * @column("name"=>"email","nullable"=>true,"dbType"=>"varchar(255)")
 	 * @validator("email")
 	 * @validator("length","constraints"=>array("max"=>255))
-	**/
+	*/
 	private $email;
 
 	/**
+	 * @column("name"=>"language","nullable"=>false,"dbType"=>"varchar(32)")
+	 * @validator("length","constraints"=>array("max"=>32,"notNull"=>true))
+	*/
+	private $language;
+
+	/**
 	 * @oneToMany("mappedBy"=>"user","className"=>"models\\Group")
-	**/
+	*/
 	private $groups;
 
 	/**
 	 * @oneToMany("mappedBy"=>"user","className"=>"models\\Qcm")
-	**/
+	*/
 	private $qcms;
 
 	/**
 	 * @oneToMany("mappedBy"=>"user","className"=>"models\\Question")
-	**/
+	*/
 	private $questions;
 
 	/**
 	 * @oneToMany("mappedBy"=>"user","className"=>"models\\Tag")
-	**/
+	*/
 	private $tags;
 
 	/**
 	 * @oneToMany("mappedBy"=>"user","className"=>"models\\Useranswer")
-	**/
+	*/
 	private $useranswers;
 
 	/**
 	 * @oneToMany("mappedBy"=>"user","className"=>"models\\Usergroup")
-	**/
+	*/
 	private $usergroups;
 
 	 public function getId(){
@@ -107,12 +116,24 @@ class User{
 		$this->email=$email;
 	}
 
+	 public function getLanguage(){
+		return $this->language;
+	}
+
+	 public function setLanguage($language){
+		$this->language=$language;
+	}
+
 	 public function getGroups(){
 		return $this->groups;
 	}
 
 	 public function setGroups($groups){
 		$this->groups=$groups;
+	}
+
+	 public function addGroup($group){
+		$this->groups[]=$group;
 	}
 
 	 public function getQcms(){
@@ -123,12 +144,20 @@ class User{
 		$this->qcms=$qcms;
 	}
 
+	 public function addQcm($qcm){
+		$this->qcms[]=$qcm;
+	}
+
 	 public function getQuestions(){
 		return $this->questions;
 	}
 
 	 public function setQuestions($questions){
 		$this->questions=$questions;
+	}
+
+	 public function addQuestion($question){
+		$this->questions[]=$question;
 	}
 
 	 public function getTags(){
@@ -139,12 +168,20 @@ class User{
 		$this->tags=$tags;
 	}
 
+	 public function addTag($tag){
+		$this->tags[]=$tag;
+	}
+
 	 public function getUseranswers(){
 		return $this->useranswers;
 	}
 
 	 public function setUseranswers($useranswers){
 		$this->useranswers=$useranswers;
+	}
+
+	 public function addUseranswer($useranswer){
+		$this->useranswers[]=$useranswer;
 	}
 
 	 public function getUsergroups(){
@@ -155,8 +192,36 @@ class User{
 		$this->usergroups=$usergroups;
 	}
 
+	 public function addUsergroup($usergroup){
+		$this->usergroups[]=$usergroup;
+	}
+
 	 public function __toString(){
-		return $this->id.'';
+		return ($this->language??'no value').'';
+	}
+	
+	public function isCreator(string $idGroup){
+	    $group=DAO::getById(Group::class, $idGroup);
+	    if($group->getUser()==$this->getId()){
+	        return true;
+	    }
+	    return false;
+	}
+	
+	public function isInGroup(string $idGroup){
+	    if(DAO::exists(Usergroup::class,"idGroup=? AND idUser=? AND status='1'",[$idGroup,$this->getId()])){
+	        return true;
+	    }
+	    return false;
+	}
+	
+	public function getAllGroups(){
+	    $retour=[];
+	    $userGroups=DAO::uGetAll(Usergroup::class,"idUser=? AND status='1'",false,[$this->getId()]);
+	    foreach($userGroups as $value){
+	        array_push($retour,DAO::getById(Group::class,$value->getIdGroup(),false));
+	    }
+	    return $retour;
 	}
 
 }
