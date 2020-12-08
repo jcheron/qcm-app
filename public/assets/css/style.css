@@ -6,6 +6,13 @@ body{
 	background-color: #1f1f1f;
 }
 
+.ui.menu{
+	margin:0;
+	border-radius:0px;
+	border:0px;
+	border-bottom:1px solid rgba(34,36,38,.15);
+}
+
 .menu.links{
 	background-color: #f8f9fa!important;
 	padding: 10px 0;
@@ -31,6 +38,7 @@ body{
   	text-align:center;
 }
 
+
 .flexSegmtHead {
 	display: flex;
 	justify-content: space-between;
@@ -54,7 +62,10 @@ body{
 	border-radius: 0.4em;
 }
 
-._element:hover {
+
+#field-questionForm-ckcontent{
+	display:none;
+}
 
 textarea,input,.selection{
 	margin:10px 0 !important;

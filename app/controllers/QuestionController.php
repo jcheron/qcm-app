@@ -48,31 +48,30 @@ class QuestionController extends ControllerBase {
      *
      * @route('/','name'=>'question')
      */
-    public function index() {
+    public function index($msg='') {
         $answer_array= array();
         $answer = new Answer();
         $answer->setScore(0);
         array_push($answer_array,$answer);
         USession::set('answers',$answer_array);
-        $dt=$this->uiService->getQuestionDataTable($this->loader-> my());
-        $this->jquery->getOnClick ( '._delete', 'delete', 'body', [
-            'hasLoader' => 'internal',
-            'attr' => 'data-ajax'
-        ] );
-        $this->jquery->getOnClick ( '._edit', Router::path ( 'Question.update', [
-            ''
-        ] ), '#response', [
-            'hasLoader' => 'internal',
-            'attr' => 'data-ajax'
-        ] );
-        
+        $toolbar=$this->uiService->questionBankToolbar();
+        $this->jquery->ajax('get', Router::path('question.my'),"#myquestions");
+        $this->jquery->ajaxOn('change','#input-Filter', Router::path('question.getBy.tags',['']),"#myquestions",[
+            'method' => 'post',
+            'params' =>'{"tags":$("#input-Filter").val()}',
+            'hasLoader'=>'internal'
+        ]);
         $this->jquery->getHref('#add', '',[
             'hasLoader'=>'internal',
             'historize'=>false
         ]);
-        $this->_index ($this->jquery->renderView ( 'QuestionController/template/myQuestion.html',[
-
-        ],true));
+        $this->jquery->ajaxOnClick ( '._delete', Router::path('question.delete') , '#response-form', [
+        		'hasLoader' => 'internal',
+        		'method' => 'delete',
+        		'attr' => 'data-ajax',
+        ] );
+        $this->_index ($this->jquery->renderView('QuestionController/template/QuestionBank.html',['msg'=>$msg],true), [
+        ] );
     }
     
     private function _index($response='') {
@@ -100,10 +99,6 @@ class QuestionController extends ControllerBase {
      * @get("add",'name'=>'question.add')
      */
     public function add() {
-        $this->jquery->postFormOnClick('#create', Router::path('question.submit'), 'questionForm','#response',[
-            'hasLoader'=>'internal',
-            'params'=>'{"answers":$("#frmAnswer").serialize(),"ckcontent":window.editor.getData(),"tags":$("#checkedTagForm").serializeArray()}'
-        ]);
         $this->jquery->getHref('#cancel', '',[
             'hasLoader'=>'internal',
             'historize'=>false
@@ -111,8 +106,8 @@ class QuestionController extends ControllerBase {
         $this->jquery->ajax('get',Router::path('tag.my'),'#tagManager',[
             'hasLoader'=>'internal',
             'historize'=>false,
-            'jsCallback'=>'$(".ui.menu .item:first-child").popup({
-   								 popup : $(".ui.popup"),
+            'jsCallback'=>'$("#tagMenu").popup({
+   								 popup : $("#tagPopup"),
     						     on : "click"
 							});;'
         ]);
@@ -122,6 +117,12 @@ class QuestionController extends ControllerBase {
         ]);
         $this->jquery->exec('$("#text-dropdown-questionForm-typeq-0").html("Select a type");',true);
         $frm = $this->uiService->questionForm ();
+        $frm->fieldAsSubmit ( 'submit', 'green', Router::path('question.submit'), '#response', [
+            'ajax' => [
+                'hasLoader' => 'internal',
+                'params'=>'{"answers":$("#frmAnswer").serialize(),"ckcontent":window.editor.getData(),"tags":$("#checkedTagForm").serializeArray()}'
+            ]
+        ] );
         $this->jquery->getOnClick ( '#dropdown-questionForm-typeq-0 .menu .item', 'question/getform', '#response-form', [
             'stopPropagation'=>false,
             'attr' => 'data-value',
@@ -135,6 +136,16 @@ class QuestionController extends ControllerBase {
             'identifier'=>'#questionForm-ckcontent',
             'lang'=>$lang
         ]) ;
+    }
+    
+    /**
+     *
+     * @get("delete/{id}",'name'=>'question.delete')
+     */
+    public function delete($id) {
+    	$this->loader->remove($id);
+    	$msg = $this->jquery->semantic()->htmlMessage('','success !');
+    	$this->index($msg);
     }
     
     /**
@@ -194,16 +205,50 @@ class QuestionController extends ControllerBase {
     
     /**
      *
+     * @post("getByTags","name"=>"question.getBy.tags")
+     */
+    public function getByTags() {
+        $postTags = URequest::getInput('tags');
+        if(strlen($postTags['tags'])>0){
+           $tagIdArray = explode(',',URequest::getPost()['tags']);
+    	   $tagObjects = array();
+    	   $tag = new Tag();
+    	   foreach($tagIdArray as $tagId) {
+    	       $tag->setId($tagId);
+    	       array_push($tagObjects,$tag);
+    	   }
+    	   $questions = $this->loader->getByTags($tagObjects);
+    	   $dt=$this->uiService->getQuestionDataTable($questions);
+    	   $this->_index($this->jquery->renderView ( 'QuestionController/template/myQuestions.html',[
+    	   ],true));
+        }else{
+           $this->displayMyQuestions();
+        }
+    }
+    
+    /**
+     *
+     * @get("displayMyQuestions","name"=>"question.my")
+     */
+    public function displayMyQuestions() {
+    	$dt=$this->uiService->getQuestionDataTable($this->loader->my());
+    	$this->_index($this->jquery->renderView( 'QuestionController/template/myQuestions.html', [] ,true));
+    }
+    
+    /**
+     *
      * @post("add","name"=>"question.submit")
      */
     public function submit() {
-        $post = URequest::getPost();
-        $tags = URequest::getInput()['tags'];
+        $post = URequest::getDatas();
         $tagsObjects = array();
-        for ($i = 0; $i < count($tags); $i++) {
-        	$tagToInsert = new Tag();
-        	$tagToInsert->setId($tags[$i]['name']);
-        	array_push($tagsObjects,$tagToInsert);
+        if (array_key_exists ( 'tags', $post  )){
+                $tags = $post['tags'];
+            for ($i = 0; $i < count($tags); $i++) {
+        	   $tagToInsert = new Tag();
+        	   $tagToInsert->setId($tags[$i]['name']);
+        	   array_push($tagsObjects,$tagToInsert);
+            }
         }
         $strAnswersArray = explode("&", str_replace( '&amp;', '&', $post['answers']));
         $postAnswers = array();
@@ -230,6 +275,7 @@ class QuestionController extends ControllerBase {
             $answer->setQuestion($question);
             DAO::insert($answer,true);
         }
-        $this->jquery->renderView ( 'QuestionController/add.html' , [ ]);
+        $msg = $this->jquery->semantic()->htmlMessage('','success !');
+        $this->index($msg);
     }
 }

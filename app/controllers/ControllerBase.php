@@ -15,7 +15,7 @@ abstract class ControllerBase extends Controller{
 
 	public function initialize() {
 	    if(USession::get('activeUser',false)){
-	        TranslatorManager::setLocale(USession::get('activeUser')['language']);
+	        //TranslatorManager::setLocale(USession::get('activeUser')['language']);
 	    }
 		if (! URequest::isAjax ()) {
 		    $user = USession::get('activeUser');
