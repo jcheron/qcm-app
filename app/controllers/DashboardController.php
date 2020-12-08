@@ -8,6 +8,7 @@ use Ubiquity\utils\http\USession;
 use models\Answer;
 use models\Question;
 use models\User;
+use Ubiquity\translation\TranslatorManager;
 use services\DashboardDAOLoader;
 
  /**
@@ -17,23 +18,23 @@ use services\DashboardDAOLoader;
   */
 
 class DashboardController extends ControllerBase{
-    
     /**
-     *
-     * @autowired
-     * @var DashboardDAOLoader
-     */
+    *
+    * @autowired
+    * @var DashboardDAOLoader
+    */
     private $loader;
     
     /**
-     *
-     * @param \services\DashboardDAOLoader $loader
-     */
+    *
+    * @param \services\UserDAOLoader $loader
+    */
+    
     public function setLoader($loader) {
         $this->loader = $loader;
     }
     
-	public function index(){
-		$this->loadView("DashboardController/index.html");
-	}
+    public function index() {
+        $this->loadView("DashboardController/index.html");
+    }
 }

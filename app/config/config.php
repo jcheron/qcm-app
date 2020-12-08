@@ -26,9 +26,11 @@ return array(
   'sessionName' => 's5fc15c2d88353',
 )['sessionName'],\Monolog\Logger::INFO);},
 	"di"=>array(
-			"@exec"=>array("jquery"=>function ($controller){
+			"@exec"=>array(
+					"jquery"=>function ($controller){
 						return \Ubiquity\core\Framework::diSemantic($controller);
-					})
+					}
+					)
 			),
 	"cache"=>array(
 			"directory"=>"cache/",
