@@ -9,11 +9,14 @@ use Ubiquity\controllers\Router;
 use Ubiquity\orm\DAO;
 use Ubiquity\translation\TranslatorManager;
 use Ubiquity\utils\http\URequest;
+use Ubiquity\utils\http\USession;
 use models\Group;
 use models\Qcm;
 use models\Question;
+use models\Tag;
 use models\Typeq;
 use models\User;
+use Ajax\semantic\html\elements\HtmlLabel;
 
 class UIService {
 	protected $jquery;
@@ -22,6 +25,7 @@ class UIService {
 		$this->jquery = $jq;
 		$this->semantic = $jq->semantic ();
 	}
+	
 	public function questionDataTable($name,$questions,$checked) {
 		$q = new Question ();
 		$dt = $this->jquery->semantic ()->dataTable($name, $q,$questions);
@@ -56,30 +60,63 @@ class UIService {
 		    $toolbar->addPopupAsItem('Sort', 'sort','<div id="response-tag"></div>');
 		    $toolbar->addHeader(TranslatorManager::trans('questionBank',[],'main'));
 		    $toolbar->setClass('ui top attached menu');
-		    
 		    $dt->setToolbar($toolbar);
 		}
 		$dt->setColWidths([0=>8,1=>1,2=>1]);
 		$dt->setIdentifierFunction ( 'getId' );
+		$this->jquery->ajax('get',Router::path('tag.my'),'#response-tag',[
+				'hasLoader'=>'internal',
+				'historize'=>false,
+				'jsCallback'=>'$(".ui.menu .item:first-child").popup({
+   								 popup : $(".ui.popup"),
+    						     on : "click"
+							});;'
+		]);
 		return $dt;
-		
 	}
 	
 	public function questionForm() {
 	    $q = new Question ();
 	    $frm = $this->jquery->semantic ()->dataForm ( 'questionForm', $q );
 	    $frm->setFields ( [
+	        'submit',
 	        'caption',
+	        'addbody',
 	        'ckcontent',
-	        'typeq'
+	        'typeq',
+	    ] );
+	    $frm->setCaptions([
+	        'submit',
+	        'caption',
+	        'addbody',
+	        '',
+	        'Type'
+	    ]);
+	    $frm->fieldAsButton('addbody','ui green button',[
+	        'content'=>'Add body',
+	        'click'=>'$("#field-questionForm-ckcontent").show();$(this).hide();'
+	    ]);
+	    $frm->fieldAsInput ( 'caption', [
+	        'rules' => [
+	            'empty',
+	            'length[5]'
+	        ]
 	    ] );
 	    $types = DAO::getAll ( Typeq::class );
 	    $ddtypes= array();
 	    foreach ($types as &$value) {
 	        array_push($ddtypes,$value->getCaption());
 	    }
-	    $frm->fieldAsDropDown ( 'typeq', JArray::modelArray ( $types, 'getId','getCaption' ),false,'test2' );
+	    $frm->fieldAsDropDown ( 'typeq', JArray::modelArray ( $types, 'getId','getCaption' ),false,[
+	        'rules' => [
+	            'empty',
+	        ]
+	    ]);
 	    $q->setTypeq ( current ( $types ) );
+	    $frm->setValidationParams ( [
+	        "on" => "blur",
+	        "inline" => true
+	    ] );
 	    return $frm;
 	}
 	
@@ -103,17 +140,35 @@ class UIService {
 	    $msg->addIcon ( "x" );
 	    $dt->setEmptyMessage ( $msg );
 	    $dt->setFields ( [
-	        'id',
-	        'caption'
+	        'caption',
+	    	'tags',
+	    	'typeq',
+	    	'action'
 	    ] );
+		$dt->insertDeleteButtonIn(3,true);
+		$dt->insertEditButtonIn(3,true);
+		$dt->insertDisplayButtonIn(3,true);
+	    $dt->setClass(['ui very basic table']);
 	    $dt->setCaptions([
-	        'id',
 	        TranslatorManager::trans('caption',[],'main')
 	    ]);
-	    $dt->onRowClick('alert(\'ok\')');
+		$dt->setValueFunction('tags',function($tags){
+		    if($tags!=null){
+			$res=[];
+			foreach ($tags as $tag){
+				$label=new HtmlLabel($tag->getId(),$tag->getName());
+				$res[]=$label->setClass('ui '.$tag->getColor().' label');
+			}
+			return $res;
+		    }
+			});
 	    $dt->setIdentifierFunction ( 'getId' );
-	    $dt->addEditDeleteButtons ( false );
+	    $dt->setColWidths([0=>9,1=>2,2=>1,3=>2]);
 	    $dt->setEdition ();
+	    $this->jquery->getOnClick ( '._delete', Router::path ('question.delete',[""]), 'body', [
+	    		'hasLoader' => 'internal',
+	    		'attr' => 'data-ajax'
+	    ] );
 	}
 	
 	public function displayMyGroups($myGroups,$inGroups){
@@ -181,6 +236,16 @@ class UIService {
 		$this->jquery->ajaxOnClick('.refuse',Router::path('groupDemandAccept',['false',URequest::getUrlParts()[2]]),'#response',[
 			'attr'=>'data-ajax'
 		]);
+	}
+	
+	public function questionBankToolbar(){
+		$mytags = DAO::getAll( Tag::class, 'idUser='.USession::get('activeUser')['id'],false);
+		$dd = $this->jquery->semantic()->htmlDropdown('Filter','',JArray::modelArray ( $mytags, 'getId','getName' ));
+		$dd->asSearch('tags',true);
+		$toolbar = $this->jquery->semantic()->htmlMenu('QuestionBank');
+		$toolbar->addDropdownAsItem($dd);
+		$toolbar->addHeader(TranslatorManager::trans('questionBank',[],'main'));
+		$toolbar->setClass('ui top attached menu');	
 	}
 
 }
