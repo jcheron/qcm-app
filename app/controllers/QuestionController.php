@@ -13,8 +13,6 @@ use models\Typeq;
 use services\QuestionDAOLoader;
 use services\UIService;
 
-
-
 /**
  * Controller QuestionController
  * @route('question','inherited'=>true,'automated'=>true)
@@ -55,7 +53,13 @@ class QuestionController extends ControllerBase {
         array_push($answer_array,$answer);
         USession::set('answers',$answer_array);
         $toolbar=$this->uiService->questionBankToolbar();
-        $this->jquery->ajax('get', Router::path('question.my'),"#myquestions");
+        $modal=$this->uiService->modal();
+        $this->jquery->ajax('get', Router::path('question.my'),"#myquestions",[
+            'hasLoader'=>false,
+        ]);
+        $this->jquery->ajax('get', Router::path('tag.my'),"#myTags",[
+            'hasLoader'=>false,
+        ]);
         $this->jquery->ajaxOn('change','#input-Filter', Router::path('question.getBy.tags',['']),"#myquestions",[
             'method' => 'post',
             'params' =>'{"tags":$("#input-Filter").val()}',
@@ -65,11 +69,6 @@ class QuestionController extends ControllerBase {
             'hasLoader'=>'internal',
             'historize'=>false
         ]);
-        $this->jquery->ajaxOnClick ( '._delete', Router::path('question.delete') , '#response-form', [
-        		'hasLoader' => 'internal',
-        		'method' => 'delete',
-        		'attr' => 'data-ajax',
-        ] );
         $this->_index ($this->jquery->renderView('QuestionController/template/QuestionBank.html',['msg'=>$msg],true), [
         ] );
     }
@@ -84,14 +83,13 @@ class QuestionController extends ControllerBase {
         $this->jquery->postFormOnClick ( '#addAnswer', Router::path('question.add.answer',['']) ,'frmAnswer', '#response-form', [
             'hasLoader' => 'internal',
             'method' => 'post',
-            'attr' => 'data-ajax',
+            'attr' => 'data-ajax'
         ] );
         $this->jquery->ajaxOnClick ( '._remove', Router::path('question.delete.answer',['']) , '#response-form', [
             'hasLoader' => 'internal',
             'method' => 'delete',
-            'attr' => 'data-ajax',
-        ] );
-        
+            'attr' => 'data-ajax'
+        ] ); 
     }
     
     /**
@@ -103,19 +101,8 @@ class QuestionController extends ControllerBase {
             'hasLoader'=>'internal',
             'historize'=>false
         ]);
-        $this->jquery->ajax('get',Router::path('tag.my'),'#tagManager',[
-            'hasLoader'=>'internal',
-            'historize'=>false,
-            'jsCallback'=>'$("#tagMenu").popup({
-   								 popup : $("#tagPopup"),
-    						     on : "click"
-							});;'
-        ]);
-        $this->jquery->postFormOnClick('#addTag', Router::path('tag.submit'), 'tagForm','#tagManager',[
-            'hasLoader'=>'internal',
-            'jsCallback'=>"$('#nametag').val('');"
-        ]);
-        $this->jquery->exec('$("#text-dropdown-questionForm-typeq-0").html("Select a type");',true);
+        $this->uiService->tagManagerJquery();
+
         $frm = $this->uiService->questionForm ();
         $frm->fieldAsSubmit ( 'submit', 'green', Router::path('question.submit'), '#response', [
             'ajax' => [
@@ -123,20 +110,14 @@ class QuestionController extends ControllerBase {
                 'params'=>'{"answers":$("#frmAnswer").serialize(),"ckcontent":window.editor.getData(),"tags":$("#checkedTagForm").serializeArray()}'
             ]
         ] );
-        $this->jquery->getOnClick ( '#dropdown-questionForm-typeq-0 .menu .item', 'question/getform', '#response-form', [
-            'stopPropagation'=>false,
-            'attr' => 'data-value',
-            'hasLoader' => false,
-            'jsCallback' =>'$("#input-dropdown-questionForm-typeq-0").attr("name","typeq");
-                            $("#input-dropdown-questionForm-typeq-0").val($(self).attr("data-value"))'
-
-        ] );
+        
         $lang=(USession::get('activeUser')['language']=='en_EN')? 'en' : 'fr';
         $this->jquery->renderView ( 'QuestionController/add.html', [
             'identifier'=>'#questionForm-ckcontent',
             'lang'=>$lang
         ]) ;
     }
+	
     
     /**
      *
@@ -150,9 +131,48 @@ class QuestionController extends ControllerBase {
     
     /**
      *
-     * @get("one/{id}","name"=>"getOne")
+     * @get("patch/{id}",'name'=>'question.patch')
      */
-    public function getOne($id) {
+    public function patch($id) {
+    	$question = $this->loader->get($id);
+    	$type=$question->getTypeq();
+
+    	$this->jquery->ajax('get', 'question/getform/'.$type->getId().'','#response-form',[
+    	    'hasLoader'=>false,
+    	]);
+    	$this->jquery->getHref('#cancel', '',[
+    			'hasLoader'=>false,
+    			'historize'=>false
+    	]);
+    	$this->uiService->tagManagerJquery();
+    	$frm = $this->uiService->questionForm ($question);
+    	$frm->fieldAsSubmit ( 'submit', 'green', Router::path('question.submit.patch'), '#response', [
+    			'content'=>'Edit',
+    	        'ajax' => [
+    					'hasLoader' => 'internal',
+    					'params'=>'{"answers":$("#frmAnswer").serialize(),"ckcontent":window.editor.getData(),"tags":$("#checkedTagForm").serializeArray()}'
+    			]
+    	] );
+    	$frm->addField('id');
+    	$frm->fieldAsHidden('id',[
+    	    'value'=>$id
+    	]);
+    	$this->jquery->attr('#input-dropdown-questionForm-typeq-0','name','typeq',true);
+    	$this->jquery->attr('#input-dropdown-questionForm-typeq-0','value',$type->getId(),true);
+    	$this->jquery->html('#text-dropdown-questionForm-typeq-0',$type->getCaption(),true);
+    	USession::set('answers', $question->getAnswers());
+    	$lang=(USession::get('activeUser')['language']=='en_EN')? 'en' : 'fr';
+    	$this->jquery->renderView ( 'QuestionController/patch.html', [
+    			'identifier'=>'#questionForm-ckcontent',
+    			'lang'=>$lang
+    	]) ;
+    }
+    
+    /**
+     *
+     * @get("preview/{id}","name"=>"question.preview")
+     */
+    public function preview($id) {
         $question = $this->loader->get($id);
         $answers = $question->getAnswers();
         $this->jquery->renderView ( 'QuestionController/question.html', [ 
@@ -161,13 +181,23 @@ class QuestionController extends ControllerBase {
         ]) ;
     }
 
-    public function getform($type) {
+    public function getform($type,$msg='') {
         switch ($type) {
             case 1:
                 $this->getMultipleChoicesJquery();
+                $this->jquery->renderView('QuestionController/template/1.html', ['answers'=>USession::get('answers'),'msg'=>$msg]);
                 break;
+            case 2:
+            	$this->jquery->renderView('QuestionController/template/2.html', ['answers'=>USession::get('answers')]);
+            	break;
+            case 3:
+            	$this->jquery->renderView('QuestionController/template/3.html', ['answers'=>USession::get('answers')]);
+            	break;
+            case 4:
+            	$this->getMultipleChoicesJquery();
+            	$this->jquery->renderView('QuestionController/template/4.html', ['answers'=>USession::get('answers')]);
+            	break;
         }
-        $this->jquery->renderView('QuestionController/template/'.$type.'.html', ['answers'=>USession::get('answers')]);
     }
     
     /**
@@ -175,12 +205,12 @@ class QuestionController extends ControllerBase {
      * @post("addAnswerToQuestion","name"=>"question.add.answer")
      */
     public function addAnswerToQuestion() {
-        $postAnswers = URequest::getPost();
+        $postAnswers = URequest::getDatas();
         $answerObjects = array();
-        for ($i = 1; $i <= count($postAnswers)/2; $i++) {
+        for ($i = 0; $i < count($postAnswers['caption']); $i++) {
             $answerToInsert = new Answer();
-            $answerToInsert->setCaption(html_entity_decode($postAnswers['caption-'.$i]));
-            $answerToInsert->setScore($postAnswers['score-'.$i]);
+            $answerToInsert->setCaption($postAnswers['caption'][$i]);
+            $answerToInsert->setScore($postAnswers['score'][$i]);
             array_push($answerObjects,$answerToInsert);
         }
         $newanswer = new Answer();
@@ -196,11 +226,15 @@ class QuestionController extends ControllerBase {
      * @delete("removeAnswerFromQuestion/{index}","name"=>"question.delete.answer")
      */
     public function removeAnswerFromQuestion(int $index) {
-        $answers = USession::get('answers');
-        unset($answers [$index-1]);
-        $answers = array_values($answers);
-        USession::set('answers', $answers);
-        $this->getform(1);
+        if($index!=1){
+            $answers = USession::get('answers');
+            unset($answers [$index-1]);
+            $answers = array_values($answers);
+            USession::set('answers', $answers);
+            $this->getform(1);
+        }else{
+            $this->getform(1,'You cant');
+        }
     }
     
     /**
@@ -241,35 +275,13 @@ class QuestionController extends ControllerBase {
      */
     public function submit() {
         $post = URequest::getDatas();
-        $tagsObjects = array();
-        if (array_key_exists ( 'tags', $post  )){
-                $tags = $post['tags'];
-            for ($i = 0; $i < count($tags); $i++) {
-        	   $tagToInsert = new Tag();
-        	   $tagToInsert->setId($tags[$i]['name']);
-        	   array_push($tagsObjects,$tagToInsert);
-            }
-        }
-        $strAnswersArray = explode("&", str_replace( '&amp;', '&', $post['answers']));
-        $postAnswers = array();
-        foreach($strAnswersArray as $item) {
-            $array = explode("=", $item);
-            array_push($postAnswers,$array);
-        }
-        $answerObjects = array();
-        for ($i = 0; $i < count($postAnswers); $i += 2) {
-            $answerToInsert = new Answer();
-            $answerToInsert->setCaption($postAnswers[$i][1]);
-            $answerToInsert->setScore($postAnswers[$i+1][1]);
-            array_push($answerObjects,$answerToInsert);
-        }
         $question= new Question ();
+        URequest::setValuesToObject($question);
         $typeq= new Typeq ();
         $typeq->setId($post['typeq']);
-        $question->setCaption ( $post['caption'] );
-        $question->setCkContent ( $post['ckcontent'] );
-        $question->setTypeq($typeq);
-        $question->setUser(USession::get('activeUser')['id']);
+        $question->setTypeq($typeq); 
+        $tagsObjects = $this->getTagPostData();
+        $answerObjects = $this->getAnswersPostData();
         $this->loader->add ( $question, $tagsObjects );
         foreach($answerObjects as $answer) {
             $answer->setQuestion($question);
@@ -278,4 +290,62 @@ class QuestionController extends ControllerBase {
         $msg = $this->jquery->semantic()->htmlMessage('','success !');
         $this->index($msg);
     }
+    
+    /**
+     *
+     * @post("submitpatch","name"=>"question.submit.patch")
+     */
+    public function submitPatch() {
+        $post = URequest::getDatas();
+        $question= new Question ();
+        URequest::setValuesToObject($question);
+        $typeq= new Typeq ();
+        $typeq->setId($post['typeq']);
+        $question->setTypeq($typeq);
+        $tagsObjects = $this->getTagPostData();
+        $answerObjects = $this->getAnswersPostData();
+        $question->setAnswers($answerObjects);
+        $this->loader->update( $question, $tagsObjects );
+        foreach($answerObjects as $answer) {
+            $answer->setQuestion($question);
+            DAO::insert($answer,true);
+        }
+        $msg = $this->jquery->semantic()->htmlMessage('','success !');
+        $this->index($msg);
+    }
+    
+    private function getAnswersPostData(){
+        $post = URequest::getDatas();
+        if(strlen($post['answers'])>0){
+            $strAnswersArray = explode("&", str_replace( '&amp;', '&', $post['answers']));
+            $postAnswers = array();
+            foreach($strAnswersArray as $item) {
+                $array = explode("=", $item);
+                array_push($postAnswers,$array);
+            }
+            $answerObjects = array();
+            for ($i = 0; $i < count($postAnswers); $i += 2) {
+                $answerToInsert = new Answer();
+                $answerToInsert->setCaption($postAnswers[$i][1]);
+                $answerToInsert->setScore($postAnswers[$i+1][1]);
+                array_push($answerObjects,$answerToInsert);
+            }
+        } 
+        return $answerObjects;
+    }
+    
+    private function getTagPostData(){
+        $post = URequest::getDatas();
+        $tagsObjects = array();
+        if (array_key_exists ( 'tags', $post  )){
+            $tags = $post['tags'];
+            for ($i = 0; $i < count($tags); $i++) {
+                $tagToInsert = new Tag();
+                $tagToInsert->setId($tags[$i]['name']);
+                array_push($tagsObjects,$tagToInsert);
+            }
+        }
+        return $tagsObjects;
+    }
+    
 }
