@@ -9,9 +9,7 @@
 					<div class="content">Welcome to your dashboard, {{user.firstname}}</div>
 				</h2>
 			</div>
-			
-			<!-- TODO: faire marcher le CSS pour utiliser flexbox et bien afficher quelques questions de l'utilisateur depuis la BDD -->
-			
+						
 			<div class="ui segment">
 				<p>Top</p>
 			</div>
@@ -25,9 +23,7 @@
 						</button>
 					</div>
 					<div class="flexSegmtBody">
-						<div>Ceci est une questio</div>
-						<div>Ceci est une question</div>
-						<div>Ceci est une question</div>
+						<div>{{#caption}} {{.}} {{/caption}}</div>
 						<div>Ceci est une question</div>
 						<div>Ceci est une question</div>
 						<div>Ceci est une question</div>
@@ -46,33 +42,49 @@
 				</div>
 				<div class="ui segment">
 					<div class="flexSegmtHead">
-						<p>Your QCM :</p>
-						<button class="ui green basic button" onclick="location.href='qcm';">
-							<i class="icon user"></i>
-							QCM
-						</button>
-					</div>
-					<div class="flexSegmtBody">
-						<div>Ceci est un exam</div>
-					</div>
-				</div>
-				<div class="ui segment">
-					<div class="flexSegmtHead">
-						<p>Your exams :</p>
-						<button class="ui brown basic button" onclick="location.href='group';">
+						<p>Your groups :</p>
+						<button class="ui green basic button" onclick="location.href='group';">
 							<i class="icon user"></i>
 							Group
 						</button>
 					</div>
 					<div class="flexSegmtBody">
 						<div>Ceci est un exam</div>
-						<div>Ceci est un exam</div>
-						<div>Ceci est un exam</div>
 					</div>
 				</div>
 			</div>
 			<div class="ui segment">
 				<p>Bottom</p>
+			</div>
+			<div class="ui horizontal segments" style="max-height: 30em;">
+				<div class="ui segment">
+					<div class="flexSegmtHead">
+						<p>Your QCM :</p>
+						<button class="ui red basic button" onclick="location.href='qcm';">
+							<i class="icon user"></i>
+							QCM
+						</button>
+					</div>
+					<div class="flexSegmtBody">
+						<div>Ceci est un exam</div>
+						<div>Ceci est un exam</div>
+					</div>
+				</div>
+				<div class="ui segment">
+					<div class="flexSegmtHead">
+						<p>Your exam :</p>
+						<button class="ui brown basic button" onclick="location.href='exam';">
+							<i class="icon user"></i>
+							Exam
+						</button>
+					</div>
+					<div class="flexSegmtBody">
+						<div>Ceci est un exam</div>
+						<div>Ceci est un exam</div>
+						<div>Ceci est un exam</div>
+						
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
