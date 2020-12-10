@@ -4,6 +4,7 @@ namespace services;
 
 use Ajax\php\ubiquity\JsUtils;
 use Ajax\semantic\html\collections\HtmlMessage;
+use Ajax\semantic\html\elements\HtmlLabel;
 use Ajax\service\JArray;
 use Ubiquity\controllers\Router;
 use Ubiquity\orm\DAO;
@@ -16,7 +17,6 @@ use models\Question;
 use models\Tag;
 use models\Typeq;
 use models\User;
-use Ajax\semantic\html\elements\HtmlLabel;
 
 class UIService {
 	protected $jquery;
@@ -31,11 +31,14 @@ class UIService {
 		$dt = $this->jquery->semantic ()->dataTable($name, $q,$questions);
 		$dt->setFields ( [
 		    'caption',
-		    'point'
+		    'tags',
+		    'typeq',
+		    'action'
 		] );
 		$dt->setcaptions([
 		    TranslatorManager::trans('caption',[],'main'),
-		    TranslatorManager::trans('point',[],'main')
+		    'tags',
+		    'type',
 		]);
 		$dt->setVariation('compact');
 		$dt->setIdentifierFunction ( 'getId');
@@ -56,27 +59,42 @@ class UIService {
 		    $dt->insertDefaultButtonIn(4, 'plus','_add circular green ',false,null,'add');
 		    $dt->setEmptyMessage($msg);
 		    $dt->setStyle('margin-top:0;padding-inline: 10px 20px;');
-		    $toolbar = $this->jquery->semantic()->htmlMenu('Question Bank');
-		    $toolbar->addPopupAsItem('Sort', 'sort','<div id="response-tag"></div>');
-		    $toolbar->addHeader(TranslatorManager::trans('questionBank',[],'main'));
-		    $toolbar->setClass('ui top attached menu');
+		    $toolbar = $this->questionBankToolbar();
 		    $dt->setToolbar($toolbar);
 		}
-		$dt->setColWidths([0=>8,1=>1,2=>1]);
-		$dt->setIdentifierFunction ( 'getId' );
-		$this->jquery->ajax('get',Router::path('tag.my'),'#response-tag',[
-				'hasLoader'=>'internal',
-				'historize'=>false,
-				'jsCallback'=>'$(".ui.menu .item:first-child").popup({
-   								 popup : $(".ui.popup"),
-    						     on : "click"
-							});;'
-		]);
+        $dt->setValueFunction('tags', function ($tags) {
+            if ($tags != null) {
+                $res = [];
+                foreach ($tags as $tag) {
+                    $label = new HtmlLabel($tag->getId(), $tag->getName());
+                    $res[] = $label->setClass('ui ' . $tag->getColor() . ' label');
+                }
+                return $res;
+            }
+        });
+        $dt->setValueFunction('typeq', function ($typeq) {
+            if ($typeq != null) {
+                $label = new HtmlLabel('', $typeq->getCaption());
+                $label->setClass('ui circular label');
+                return $label;
+            }
+        });
+        $dt->setIdentifierFunction('getId');
+        $dt->setColWidths([
+            0 => 9,
+            1 => 2,
+            2 => 1,
+            3 => 2
+        ]);
 		return $dt;
 	}
 	
-	public function questionForm() {
-	    $q = new Question ();
+	public function questionForm($question='') {
+		if($question==''){
+			$q = new Question ();
+		}else{
+			$q =$question;
+		}
 	    $frm = $this->jquery->semantic ()->dataForm ( 'questionForm', $q );
 	    $frm->setFields ( [
 	        'submit',
@@ -101,21 +119,27 @@ class UIService {
 	            'empty',
 	            'length[5]'
 	        ]
-	    ] );
+	    ] )->setValue(1000);
 	    $types = DAO::getAll ( Typeq::class );
-	    $ddtypes= array();
-	    foreach ($types as &$value) {
-	        array_push($ddtypes,$value->getCaption());
-	    }
 	    $frm->fieldAsDropDown ( 'typeq', JArray::modelArray ( $types, 'getId','getCaption' ),false,[
 	        'rules' => [
 	            'empty',
 	        ]
+	        
 	    ]);
+	    $this->jquery->html('#text-dropdown-questionForm-typeq-0','<div style="color:#8e8e8e">Select type</div>',true);
 	    $q->setTypeq ( current ( $types ) );
 	    $frm->setValidationParams ( [
 	        "on" => "blur",
 	        "inline" => true
+	    ] );
+
+	    $this->jquery->getOnClick ( '#dropdown-questionForm-typeq-0 .menu .item', 'question/getform', '#response-form', [
+	    		'stopPropagation'=>false,
+	    		'attr' => 'data-value',
+	    		'hasLoader' => false,
+	             'jsCallback' =>'$("#input-dropdown-questionForm-typeq-0").attr("name","typeq");
+                                $("#input-dropdown-questionForm-typeq-0").val($(self).attr("data-value"))'
 	    ] );
 	    return $frm;
 	}
@@ -162,10 +186,27 @@ class UIService {
 			return $res;
 		    }
 			});
+        $dt->setValueFunction('typeq', function ($typeq) {
+            if ($typeq != null) {
+                $label = new HtmlLabel('',$typeq->getCaption());
+                $label->setClass('ui circular label');
+                return $label;
+            }
+        });
 	    $dt->setIdentifierFunction ( 'getId' );
 	    $dt->setColWidths([0=>9,1=>2,2=>1,3=>2]);
 	    $dt->setEdition ();
-	    $this->jquery->getOnClick ( '._delete', Router::path ('question.delete',[""]), 'body', [
+	    $this->jquery->getOnClick ( '._delete', Router::path ('question.delete',[""]), '#response', [
+	    		'hasLoader' => 'internal',
+	    		'attr' => 'data-ajax'
+	    ] );
+	    $this->jquery->ajaxOnClick ( '._display', Router::path('question.preview',['']) , '#response-modal', [
+	    		'hasLoader' => 'internal',
+	    		'method' => 'get',
+	    		'attr' => 'data-ajax',
+	    		'jsCallback'=>'$("#modal").modal("show");'
+	    ] );
+	    $this->jquery->getOnClick ( '._edit', Router::path ('question.patch',[""]), '#response', [
 	    		'hasLoader' => 'internal',
 	    		'attr' => 'data-ajax'
 	    ] );
@@ -246,6 +287,63 @@ class UIService {
 		$toolbar->addDropdownAsItem($dd);
 		$toolbar->addHeader(TranslatorManager::trans('questionBank',[],'main'));
 		$toolbar->setClass('ui top attached menu');	
+		
+		return $toolbar;
 	}
-
+	
+	public function modal(){
+	    $modal = $this->jquery->semantic()->htmlModal('modal');
+	    $modal ->addContent('<div id="response-modal"></div>');
+	}	
+	
+	public function tagManagerJquery(){
+		$this->jquery->ajax('get',Router::path('tag.my'),'#tagManager',[
+				'hasLoader'=>'internal',
+				'historize'=>false,
+				'jsCallback'=>'$("#tagMenu").popup({
+   								 popup : $("#tagPopup"),
+    						     on : "click"
+							});;'
+		]);
+		$this->jquery->postFormOnClick('#addTag', Router::path('tag.submit'), 'tagForm','#tagManager',[
+				'hasLoader'=>'internal',
+				'jsCallback'=>"$('#nametag').val('');"
+		]);
+	}
+	
+	public function getQcmDataTable($qcms){
+		$dt = $this->jquery->semantic ()->dataTable ( 'dtQcms', Question::class, $qcms );
+		$msg = new HtmlMessage ( '', TranslatorManager::trans('noDisplay',[],'main') );
+		$msg->addIcon ( "x" );
+		$dt->setEmptyMessage ( $msg );
+		$dt->setFields ( [
+				'name',
+				'description',
+				'cdate',
+		] );
+		$dt->insertDeleteButtonIn(3,true);
+		$dt->insertEditButtonIn(3,true);
+		$dt->insertDisplayButtonIn(3,true);
+		$dt->setClass(['ui very basic table']);
+		$dt->setCaptions([
+				TranslatorManager::trans('name',[],'main')
+		]);
+		$dt->setIdentifierFunction ( 'getId' );
+		$dt->setColWidths([0=>2,1=>8,2=>3,2=>3]);
+		$dt->setEdition ();
+		$this->jquery->getOnClick ( '._delete', Router::path ('qcm.delete',[""]), '#response', [
+				'hasLoader' => 'internal',
+				'attr' => 'data-ajax'
+		] );
+		$this->jquery->ajaxOnClick ( '._display', Router::path('qcm.preview',['']) , '#response-modal', [
+				'hasLoader' => 'internal',
+				'method' => 'get',
+				'attr' => 'data-ajax',
+				'jsCallback'=>'$("#modal").modal("show");'
+		] );
+		$this->jquery->getOnClick ( '._edit', Router::path ('qcm.patch',[""]), '#response', [
+				'hasLoader' => 'internal',
+				'attr' => 'data-ajax'
+		] );
+	}
 }

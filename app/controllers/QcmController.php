@@ -47,14 +47,14 @@ class QcmController extends ControllerBase{
 	    $myQuestions = array();
 	    $myQuestions['notchecked'] = $questionLoader->my();
 	    $myQuestions['checked'] = array();
+	    $modal=$this->uiService->modal();
 	    USession::set('questions', $myQuestions);
 	    $this->jquery->getHref('#addQcm', '',[
 	        'hasLoader'=>'internal',
 	        'historize'=>false
 	    ]);
-	    $myQcm = $myQcm = $this->loader->my();
+	    $dt = $this->uiService->getQcmDataTable($this->loader->my());
 	    $this->_index($this->jquery->renderView ( 'QcmController/templates/myQcm.html',[
-	        'qcm' => $myQcm,
 	        'msg' => $msg
 	    ],true));
 	}
@@ -69,36 +69,18 @@ class QcmController extends ControllerBase{
 	 *
 	 * @get("add","name"=>'qcm.add')
 	 */
-	public function add($formContent=['name'=>'','description'=>'']) {
-	    $dtQuestionNotChecked = $this->uiService->questionDataTable('dtQuestionNotChecked',USession::get('questions')['notchecked'],false);
-	    $dtQuestionChecked = $this->uiService->questionDataTable('dtQuestionChecked',USession::get('questions')['checked'],true);
+	public function add() {
 	    $frmQcm = $this->uiService->qcmForm();
-
-	    $this->jquery->getHref('#cancel', '',[
-	        'hasLoader'=>'internal',
-	        'historize'=>false
-	    ]);
-	    $this->jquery->postFormOnClick('#create', Router::path('qcm.submit'), 'questionForm','#response',[
+	    $this->jquery->postFormOnClick('#create', Router::path('qcm.submit'), 'qcmForm','#response',[
 	        'hasLoader'=>'internal'
 	    ]);
-	    $this->jquery->ajaxOnClick ( '._add', Router::path('qcm.add.question',['']) , '#response', [
-	        'hasLoader' => 'internal',
-	        'params' => '$("#qcmForm").serialize()',
-	        'method' => 'post',
-	        'attr' => 'data-ajax',
-	    ] );
-	    $this->jquery->ajaxOnClick ( '._remove', Router::path('qcm.delete.question',['']) , '#response', [
-	        'hasLoader' => 'internal',
-	        'params' => '$("#qcmForm").serialize()',
-	        'method' => 'post',
-	        'attr' => 'data-ajax',
-	    ] );
-	    $this->_index($this->jquery->renderView ( 'QcmController/add.html', []) );
+	    $this->jquery->ajax('get', Router::path('qcm.display.bank'),'#responseBank' );
+	    $this->jquery->renderView ( 'QcmController/add.html', []);
 	}
 	
 	/**
 	 *
-	 * @post("addQuestion/{id}","name"=>"qcm.add.question")
+	 * @get("addQuestion/{id}","name"=>"qcm.add.question")
 	 */
 	public function addQuestionToQcm($id) {
 	    $myQuestions = USession::get('questions');
@@ -110,15 +92,43 @@ class QcmController extends ControllerBase{
 	            break;
 	        }    
 	    }
-	    $formContent['name'] = URequest::post('name');
-	    $formContent['description'] = URequest::post('description');
 	    USession::set('questions', $myQuestions);
-	    $this->add($formContent);
+	    $this->displayQuestionBankImport();
 	}
 	
 	/**
 	 *
-	 * @post("deleteQuestion/{id}","name"=>"qcm.delete.question")
+	 * @get("questionBankImport","name"=>'qcm.display.bank')
+	 */
+	public function displayQuestionBankImport(){
+	    $dtQuestionNotChecked = $this->uiService->questionDataTable('dtQuestionNotChecked',USession::get('questions')['notchecked'],false);
+	    $dtQuestionChecked = $this->uiService->questionDataTable('dtQuestionChecked',USession::get('questions')['checked'],true);
+	    $this->jquery->getHref('#cancel', '',[
+	        'hasLoader'=>'internal',
+	        'historize'=>false
+	    ]);
+	    $this->jquery->ajaxOnClick ( '._add', Router::path('qcm.add.question',['']) , '#responseBank', [
+	        'hasLoader' => 'internal',
+	        'method' => 'get',
+	        'attr' => 'data-ajax',
+	    ] );
+	    $this->jquery->ajaxOnClick ( '._remove', Router::path('qcm.delete.question',['']) , '#responseBank', [
+	        'hasLoader' => 'internal',
+	        'method' => 'delete',
+	        'attr' => 'data-ajax',
+	    ] );
+	    $this->jquery->ajaxOn('change','#input-Filter', Router::path('qcm.filter'),"#responseBank",[
+	        'preventDefault'=>false,
+	        'method' => 'post',
+	        'params' =>'{"tags":$("#input-Filter").val()}',
+	        'hasLoader'=>'internal'
+	    ]);
+	    $this->jquery->renderView ( 'QcmController/templates/questionBankImport.html', [] );    
+	}
+	
+	/**
+	 *
+	 * @delete("deleteQuestion/{id}","name"=>"qcm.delete.question")
 	 */
 	public function removeQuestionToQcm($id) {
 	    $myQuestions = USession::get('questions');
@@ -130,10 +140,38 @@ class QcmController extends ControllerBase{
 	            break;
 	        }
 	    }
-	    $formContent['name'] = URequest::post('name');
-	    $formContent['description'] = URequest::post('description');
 	    USession::set('questions', $myQuestions);
-	    $this->add($formContent);
+	    $this->displayQuestionBankImport();
+	}
+	
+	/**
+	 *
+	 * @post("filterQuestionBank","name"=>"qcm.filter")
+	 */
+	public function filterQuestionBank() {
+	    $this->displayQuestionBankImport();
+
+	}
+	
+	/**
+	 *
+	 * @get("delete/{id}",'name'=>'qcm.delete')
+	 */
+	public function delete($id) {
+		$this->loader->remove($id);
+		$msg = $this->jquery->semantic()->htmlMessage('','success !');
+		$this->index($msg);
+	}
+	
+	/**
+	 *
+	 * @get("preview/{id}","name"=>"qcm.preview")
+	 */
+	public function preview($id) {
+		$qcm = $this->loader->get($id);
+		$this->jquery->renderView ( 'QcmController/qcm.html', [
+				'qcm' => $qcm,
+		]) ;
 	}
 	
 	/**
@@ -146,7 +184,6 @@ class QcmController extends ControllerBase{
 	    $qcm->setDescription(URequest::post ( 'description', '' ) );
 	    $this->loader->add ($qcm);
 	    USession::delete('questions');
-	    $this->initialize();
 	    $this->_index($this->index(new HtmlMessage ( '', "Success !" )));
 	}
 
